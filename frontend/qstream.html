@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q‑Stream | Quantum Cloud Optimizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #050508;
+      --bg-1: #0a0a10;
+      --bg-2: #0f0f18;
+      --bg-3: #13131e;
+      --surface: rgba(255,255,255,0.03);
+      --surface-hover: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.06);
+      --border-bright: rgba(255,255,255,0.12);
+      --border-accent: rgba(99,102,241,0.35);
+      --text: #f0f0ff;
+      --text-2: #a0a0c0;
+      --text-3: #606080;
+      --accent: #6366f1;
+      --accent-2: #818cf8;
+      --accent-3: #a5b4fc;
+      --cyan: #22d3ee;
+      --green: #4ade80;
+      --orange: #fb923c;
+      --pink: #f472b6;
+      --glow: rgba(99,102,241,0.15);
+      --glow-strong: rgba(99,102,241,0.3);
+      --r: 20px;
+      --r-sm: 12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-2);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.4;
+    }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+    .wrap-wide { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+
+    /* Typography */
+    h1, h2, h3, h4 { font-family: 'Syne', sans-serif; color: var(--text); font-weight: 700; }
+    h1 { font-size: clamp(40px, 5.5vw, 76px); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { font-size: clamp(28px, 4vw, 52px); line-height: 1.1; letter-spacing: -0.025em; }
+    h3 { font-size: clamp(18px, 2vw, 24px); letter-spacing: -0.01em; }
+    .mono { font-family: 'DM Mono', monospace; }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+      color: var(--accent-3);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 14px;
+      border-radius: 100px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      padding: 13px 28px;
+      box-shadow: 0 0 0 1px rgba(99,102,241,0.5), 0 8px 32px rgba(99,102,241,0.25);
+    }
+    .btn-primary:hover {
+      background: #4f52e0;
+      transform: translateY(-2px);
+      box-shadow: 0 0 0 1px rgba(99,102,241,0.6), 0 16px 40px rgba(99,102,241,0.35);
+    }
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text);
+      padding: 13px 28px;
+      border: 1px solid var(--border-bright);
+    }
+    .btn-ghost:hover {
+      background: var(--surface-hover);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+    .btn-lg { padding: 16px 36px; font-size: 16px; border-radius: 12px; }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 500;
+      padding: 18px 0;
+      background: rgba(5,5,8,0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 16px; color: white;
+    }
+    .logo-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; color: var(--text); }
+    .nav-links { display: flex; gap: 36px; }
+    .nav-links a { color: var(--text-2); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 120px 0 100px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Grid background lines */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 30%, transparent 80%);
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: -200px; left: 50%; transform: translateX(-50%);
+      width: 1000px; height: 600px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.18) 0%, rgba(34,211,238,0.06) 40%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      color: var(--accent-3);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 16px 6px 8px;
+      border-radius: 100px;
+      margin-bottom: 32px;
+    }
+    .hero-badge-dot {
+      width: 20px; height: 20px;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+    }
+
+    .hero h1 { margin-bottom: 24px; }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent-3) 0%, var(--cyan) 60%, var(--accent-2) 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-2);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .hero-meta {
+      margin-top: 28px;
+      display: flex;
+      gap: 28px;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--text-3);
+      flex-wrap: wrap;
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+    .hero-meta span::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--accent-2); display: block; }
+
+    /* HERO VISUALIZATION — Particle / Node graph */
+    .hero-visual {
+      position: relative;
+      margin-top: 72px;
+      height: 340px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .hero-terminal {
+      position: relative;
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--bg-2);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: 0 0 0 1px var(--border), 0 32px 80px rgba(0,0,0,0.6), 0 0 80px rgba(99,102,241,0.1);
+    }
+    .terminal-bar {
+      background: var(--bg-3);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .t-red { background: #ff5f56; }
+    .t-yellow { background: #ffbd2e; }
+    .t-green { background: #27c93f; }
+    .t-title { flex: 1; text-align: center; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-3); }
+
+    .terminal-body {
+      padding: 28px 32px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      line-height: 1.9;
+    }
+    .t-line { display: flex; align-items: baseline; gap: 10px; }
+    .t-prompt { color: var(--accent-2); font-size: 12px; }
+    .t-cmd { color: var(--text); }
+    .t-comment { color: var(--text-3); }
+    .t-output { color: var(--green); padding-left: 22px; }
+    .t-output.warn { color: var(--orange); }
+    .t-output.info { color: var(--cyan); }
+    .t-cursor {
+      display: inline-block;
+      width: 8px; height: 15px;
+      background: var(--accent-2);
+      border-radius: 2px;
+      animation: blink 1.2s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* Floating metric cards */
+    .metric-cards {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+    }
+    .metric-card {
+      position: absolute;
+      background: rgba(15,15,24,0.9);
+      border: 1px solid var(--border-bright);
+      border-radius: 14px;
+      padding: 14px 18px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .metric-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .metric-label { color: var(--text-3); font-size: 11px; margin-bottom: 2px; }
+    .metric-value { color: var(--text); font-weight: 600; font-family: 'DM Mono', monospace; }
+    .m1 { top: 20px; right: 40px; animation: float1 5s ease-in-out infinite; }
+    .m2 { bottom: 30px; left: 20px; animation: float2 6s ease-in-out infinite; }
+    .m3 { top: 50%; right: 10px; transform: translateY(-50%); animation: float1 7s ease-in-out infinite 1s; }
+    @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+
+    /* ── SECTION BASE ── */
+    .section { padding: 100px 0; }
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-header p { margin-top: 16px; font-size: 18px; color: var(--text-3); max-width: 560px; margin-left: auto; margin-right: auto; }
+
+    /* Divider glow */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
+      margin: 0;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps-wrap {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .step-card {
+      background: var(--bg-1);
+      padding: 40px 36px;
+      transition: background 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .step-card:hover { background: var(--bg-2); }
+    .step-card::before {
+      content: attr(data-num);
+      position: absolute;
+      top: -20px; right: 20px;
+      font-family: 'Syne', sans-serif;
+      font-size: 100px;
+      font-weight: 800;
+      color: rgba(99,102,241,0.04);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .step-icon-wrap {
+      width: 52px; height: 52px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      margin-bottom: 28px;
+    }
+    .step-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--accent-2);
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .step-card h3 { margin-bottom: 12px; }
+    .step-card p { color: var(--text-3); font-size: 14px; line-height: 1.7; }
+
+    /* Connector arrows between steps */
+    .steps-connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      margin-top: 40px;
+    }
+
+    /* ── BENTO FEATURES ── */
+    .bento-wrap {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: auto auto;
+      gap: 16px;
+    }
+
+    .b-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 32px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .b-card:hover {
+      border-color: var(--border-accent);
+      background: var(--bg-2);
+      transform: translateY(-3px);
+    }
+    .b-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(99,102,241,0.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .b-card:hover::after { opacity: 1; }
+
+    /* Span variations */
+    .b-span-2 { grid-column: span 2; }
+    .b-tall { grid-row: span 2; }
+
+    .b-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 24px;
+    }
+    .b-icon-purple { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.2); }
+    .b-icon-cyan { background: rgba(34,211,238,0.12); border: 1px solid rgba(34,211,238,0.2); }
+    .b-icon-green { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.2); }
+    .b-icon-orange { background: rgba(251,146,60,0.12); border: 1px solid rgba(251,146,60,0.2); }
+    .b-icon-pink { background: rgba(244,114,182,0.12); border: 1px solid rgba(244,114,182,0.2); }
+
+    .b-card h3 { margin-bottom: 10px; font-size: 20px; }
+    .b-card p { color: var(--text-3); font-size: 14px; line-height: 1.7; }
+
+    /* Big stat inside bento */
+    .b-stat {
+      font-family: 'Syne', sans-serif;
+      font-size: 56px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+      margin: 20px 0 8px;
+    }
+    .b-stat-label { font-size: 13px; color: var(--text-3); }
+
+    /* Mini chart for bento */
+    .b-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 60px;
+      margin-top: 24px;
+    }
+    .b-bar {
+      flex: 1;
+      border-radius: 4px 4px 0 0;
+      background: rgba(99,102,241,0.25);
+      transition: background 0.2s;
+    }
+    .b-bar.active { background: var(--accent); }
+    .b-card:hover .b-bar.active { background: var(--accent-2); }
+
+    /* SDK snippet */
+    .b-code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .c-k { color: var(--accent-3); }
+    .c-s { color: var(--green); }
+    .c-f { color: var(--cyan); }
+    .c-n { color: var(--orange); }
+    .c-c { color: var(--text-3); }
+
+    /* ── INDUSTRIES ── */
+    .industries-section { background: var(--bg-1); }
+    .industries-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .industry-card {
+      position: relative;
+      border-radius: var(--r);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      padding: 36px 32px;
+      background: var(--bg-2);
+      transition: all 0.3s;
+      cursor: default;
+    }
+    .industry-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px var(--border-accent);
+    }
+    .industry-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--ind-color, var(--accent));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .industry-card:hover::before { opacity: 1; }
+    .ind-icon { font-size: 36px; margin-bottom: 20px; }
+    .ind-tag {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      background: var(--ind-bg, rgba(99,102,241,0.1));
+      color: var(--ind-color, var(--accent-3));
+      border: 1px solid var(--ind-border, rgba(99,102,241,0.2));
+    }
+    .industry-card h3 { margin-bottom: 10px; font-size: 22px; }
+    .industry-card p { color: var(--text-3); font-size: 14px; line-height: 1.7; }
+    .ind-stat {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ind-stat strong { color: var(--text); font-size: 14px; }
+
+    /* ── COMPARISON TABLE ── */
+    .compare-section { background: var(--bg); }
+    .compare-wrap {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+    .compare-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-row:not(.compare-head):hover { background: var(--surface); }
+    .compare-head { background: var(--bg-2); }
+    .compare-cell {
+      padding: 18px 28px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .compare-head .compare-cell {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+    .compare-head .compare-cell:last-child {
+      color: var(--accent-3);
+    }
+    .ck { color: var(--green); font-weight: 600; font-size: 16px; }
+    .cx { color: var(--text-3); font-size: 16px; }
+    .compare-cell strong { color: var(--text); font-weight: 500; }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials-section { background: var(--bg-1); }
+    .t-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .t-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 32px;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .t-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .t-quote {
+      font-size: 32px;
+      color: var(--accent);
+      font-family: 'Syne', sans-serif;
+      line-height: 1;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+    .t-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-2);
+      margin-bottom: 28px;
+    }
+    .t-author { display: flex; align-items: center; gap: 14px; }
+    .t-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      flex-shrink: 0;
+    }
+    .t-name { font-weight: 600; color: var(--text); font-size: 14px; }
+    .t-role { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .t-stars { display: flex; gap: 2px; margin-bottom: 16px; }
+    .t-star { color: #fbbf24; font-size: 14px; }
+    .t-badge {
+      position: absolute;
+      top: 20px; right: 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--green);
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.2);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    /* ── PRICING ── */
+    .pricing-section { background: var(--bg); }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .p-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 36px;
+      transition: all 0.3s;
+    }
+    .p-card.popular {
+      background: linear-gradient(160deg, rgba(99,102,241,0.12) 0%, var(--bg-2) 100%);
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 1px var(--border-accent), 0 24px 60px rgba(99,102,241,0.12);
+      transform: scale(1.02);
+    }
+    .p-card:hover:not(.popular) {
+      border-color: var(--border-bright);
+      transform: translateY(-4px);
+    }
+    .p-tier {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+    .p-tier.pop-label { color: var(--accent-3); }
+    .p-price {
+      font-family: 'Syne', sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+      margin: 16px 0 6px;
+    }
+    .p-price sub { font-size: 20px; vertical-align: middle; }
+    .p-period { font-size: 13px; color: var(--text-3); margin-bottom: 20px; }
+    .p-desc { font-size: 14px; color: var(--text-3); margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+    .p-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 0;
+      font-size: 14px;
+      color: var(--text-2);
+    }
+    .p-check { color: var(--green); font-size: 16px; flex-shrink: 0; }
+    .p-btn { margin-top: 28px; width: 100%; text-align: center; border-radius: 10px; }
+
+    /* ── FAQ ── */
+    .faq-section { background: var(--bg-1); }
+    .faq-wrap { max-width: 760px; margin: 0 auto; }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-q {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 22px 0;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text);
+      cursor: pointer;
+      gap: 20px;
+      transition: color 0.2s;
+    }
+    .faq-q:hover { color: var(--accent-3); }
+    .faq-plus {
+      width: 28px; height: 28px;
+      border: 1px solid var(--border-bright);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      color: var(--text-3);
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .faq-item.open .faq-plus {
+      background: rgba(99,102,241,0.1);
+      border-color: var(--border-accent);
+      color: var(--accent-2);
+      transform: rotate(45deg);
+    }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+      color: var(--text-3);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .faq-item.open .faq-a { max-height: 240px; padding-bottom: 22px; }
+
+    /* ── CTA BANNER ── */
+    .cta-section { padding: 100px 0; }
+    .cta-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border-accent);
+      border-radius: 32px;
+      padding: 80px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 100px rgba(99,102,241,0.08);
+    }
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-card h2 { font-size: clamp(32px, 4vw, 52px); margin-bottom: 20px; }
+    .cta-card p { color: var(--text-3); font-size: 18px; margin-bottom: 36px; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+    /* ── FOOTER ── */
+    .footer {
+      background: var(--bg-1);
+      border-top: 1px solid var(--border);
+      padding: 72px 0 36px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2.5fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 56px;
+    }
+    .footer-brand p {
+      font-size: 14px;
+      color: var(--text-3);
+      margin-top: 16px;
+      max-width: 240px;
+      line-height: 1.7;
+    }
+    .footer-col h5 {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 20px;
+      letter-spacing: 0.02em;
+    }
+    .footer-col a {
+      display: block;
+      color: var(--text-3);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 6px 0;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-bottom p { font-size: 13px; color: var(--text-3); }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(74,222,128,0.08);
+      border: 1px solid rgba(74,222,128,0.2);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--green);
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse-g 1.5s infinite;
+    }
+    @keyframes pulse-g { 0%,100%{opacity:0.5;transform:scale(0.9)} 50%{opacity:1;transform:scale(1.2)} }
+
+    .social-links { display: flex; gap: 12px; margin-top: 20px; }
+    .social-link {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      text-decoration: none;
+      transition: all 0.2s;
+      color: var(--text-3);
+    }
+    .social-link:hover { border-color: var(--border-accent); color: var(--text); background: var(--surface); }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s ease;
+    }
+    .reveal.in { opacity: 1; transform: none; }
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+    .delay-5 { transition-delay: 0.5s; }
+
+    /* ── MEDIA QUERIES ── */
+    @media (max-width: 1024px) {
+      .bento-wrap { grid-template-columns: repeat(2, 1fr); }
+      .b-span-2 { grid-column: span 1; }
+      .b-tall { grid-row: span 1; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .wrap, .wrap-wide { padding: 0 20px; }
+      .section { padding: 72px 0; }
+      .steps-wrap { grid-template-columns: 1fr; }
+      .bento-wrap { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .p-card.popular { transform: none; }
+      .t-grid { grid-template-columns: 1fr; }
+      .industries-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+      .nav-links { display: none; }
+      .compare-row { grid-template-columns: 1.5fr 1fr 1fr; }
+      .compare-cell { padding: 14px 16px; font-size: 12px; }
+      .cta-card { padding: 48px 28px; }
+      .hero { padding: 80px 0 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="wrap-wide">
+    <div class="nav-inner">
+      <a class="logo" href="#">
+        <div class="logo-mark">Q</div>
+        <span class="logo-text">Q‑Stream</span>
+      </a>
+      <div class="nav-links">
+        <a href="#how">How it Works</a>
+        <a href="#features">Features</a>
+        <a href="#industries">Industries</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-ghost"onclick="calculateQuantumSavings()" style="background: rgba(255, 255, 255, 0.05); color: white; padding: 15px 35px; border-radius: 50px; border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); font-weight: 600; cursor: pointer;">
+        Watch Demo
+    </button>
+        <button class="btn btn-primary" onclick="window.location.href='auth.html'">
+    Login / Signup
+</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main>
+<!-- ════════════════ HERO ════════════════ -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="wrap">
+    <div class="hero-content">
+      <div class="hero-badge reveal">
+        <span class="hero-badge-dot">⚡</span>
+        Now supporting IBM Quantum & AWS Braket
+      </div>
+      <h1 class="reveal delay-1">Slash Cloud Costs<br>with <em>Quantum Intelligence</em></h1>
+      <p class="hero-sub reveal delay-2">The world's first hybrid quantum-classical optimizer. Route heavy compute to quantum processors and reduce your AWS/Azure bills by up to 80% — automatically.</p>
+      <div class="hero-actions reveal delay-3">
+        <button class="btn btn-primary btn-lg" onclick="alert('Start Free Trial')">Start Free Trial →</button>
+        <button class="btn btn-ghost btn-lg" onclick="alert('Watch Demo')">▶ Watch Demo</button>
+      </div>
+      <div class="hero-meta reveal delay-4">
+        <span>No credit card required</span>
+        <span>10-minute SDK setup</span>
+        <span>14-day free trial</span>
+      </div>
+    </div>
+
+    <!-- Terminal visual -->
+    <div class="hero-visual reveal delay-3" style="position:relative; margin-top:64px;">
+      <div class="hero-terminal">
+        <div class="terminal-bar">
+          <span class="t-dot t-red"></span>
+          <span class="t-dot t-yellow"></span>
+          <span class="t-dot t-green"></span>
+          <span class="t-title">qstream — optimizer — zsh</span>
+        </div>
+        <div class="terminal-body">
+          <div class="t-line"><span class="t-prompt">→</span><span class="t-cmd">npm install @qstream/optimizer</span></div>
+          <div class="t-line"><span class="t-output info">✓ Q-Stream SDK v2.4.1 installed (0.3s)</span></div>
+          <div class="t-line" style="margin-top:8px"><span class="t-prompt">→</span><span class="t-cmd">qstream init --provider=aws --region=us-east-1</span></div>
+          <div class="t-line"><span class="t-output">✓ Quantum network authenticated</span></div>
+          <div class="t-line"><span class="t-output">✓ Cost baseline captured: <span style="color:var(--orange)">$8,420/mo</span></span></div>
+          <div class="t-line" style="margin-top:8px"><span class="t-prompt">→</span><span class="t-cmd">qstream optimize --live</span></div>
+          <div class="t-line"><span class="t-output info">⟳ Scanning workload tasks...</span></div>
+          <div class="t-line"><span class="t-output">✓ 247 tasks routed to quantum network</span></div>
+          <div class="t-line"><span class="t-output">✓ Projected monthly savings: <span style="color:var(--green)">$6,740 (80.1%)</span></span></div>
+          <div class="t-line" style="margin-top:4px"><span class="t-prompt">→</span><span class="t-cursor"></span></div>
+        </div>
+      </div>
+
+      <!-- Floating metric cards -->
+      <div class="metric-cards">
+        <div class="metric-card m1">
+          <div class="metric-icon b-icon-green">💰</div>
+          <div>
+            <div class="metric-label">Monthly Savings</div>
+            <div class="metric-value" style="color:var(--green)">$6,740</div>
+          </div>
+        </div>
+        <div class="metric-card m2">
+          <div class="metric-icon b-icon-cyan">⚡</div>
+          <div>
+            <div class="metric-label">Quantum Tasks</div>
+            <div class="metric-value" style="color:var(--cyan)">1,247 / hr</div>
+          </div>
+        </div>
+        <div class="metric-card m3">
+          <div class="metric-icon b-icon-purple">📊</div>
+          <div>
+            <div class="metric-label">Cost Reduction</div>
+            <div class="metric-value" style="color:var(--accent-3)">80.1%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ HOW IT WORKS ════════════════ -->
+<section id="how" class="section">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <span class="eyebrow">How it works</span>
+      <h2>Three steps to quantum efficiency</h2>
+      <p>Seamless integration, intelligent routing, instant savings.</p>
+    </div>
+    <div class="steps-wrap reveal delay-1">
+      <div class="step-card" data-num="01">
+        <div class="step-icon-wrap">🔌</div>
+        <div class="step-num">Step 01</div>
+        <h3>Connect Your Cloud</h3>
+        <p>Install our lightweight SDK in minutes. Supports AWS, Azure, GCP and bare-metal environments. No infrastructure changes needed.</p>
+      </div>
+      <div class="step-card" data-num="02">
+        <div class="step-icon-wrap">🧠</div>
+        <div class="step-num">Step 02</div>
+        <h3>AI Smart Routing</h3>
+        <p>Our engine analyzes compute tasks in real-time, identifying NP-hard bottlenecks where quantum processing delivers exponential speedups.</p>
+      </div>
+      <div class="step-card" data-num="03">
+        <div class="step-icon-wrap">🌀</div>
+        <div class="step-num">Step 03</div>
+        <h3>Quantum Offloading</h3>
+        <p>Complex workloads route to our global quantum network — executing at a fraction of classical cost, with results returned in milliseconds.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ BENTO FEATURES ════════════════ -->
+<section id="features" class="section" style="background:var(--bg-1)">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <span class="eyebrow">The Wow Factor</span>
+      <h2>Quantum superpowers,<br>enterprise ready</h2>
+    </div>
+    <div class="bento-wrap">
+      <!-- Big stat card -->
+      <div class="b-card b-span-2 reveal delay-1" onmousemove="cardGlow(event,this)">
+        <div class="b-icon b-icon-purple">⚛️</div>
+        <h3>Hybrid Quantum Core</h3>
+        <p>The first optimizer that dynamically switches between classical and quantum execution paths based on real-time cost and problem topology.</p>
+        <div class="b-code">
+          <span class="c-k">import</span> { QStream } <span class="c-k">from</span> <span class="c-s">'@qstream/optimizer'</span><br>
+          <span class="c-c">// One line to unlock quantum routing</span><br>
+          <span class="c-k">const</span> result = <span class="c-k">await</span> QStream.<span class="c-f">optimize</span>(<span class="c-n">task</span>)
+        </div>
+      </div>
+
+      <!-- Cost stat -->
+      <div class="b-card reveal delay-2" onmousemove="cardGlow(event,this)">
+        <div class="b-icon b-icon-green">📊</div>
+        <h3>Real-Time Cost Analytics</h3>
+        <div class="b-stat" style="color:var(--green)">80%</div>
+        <div class="b-stat-label">average cost reduction across all customers</div>
+        <div class="b-chart">
+          <div class="b-bar" style="height:30%"></div>
+          <div class="b-bar" style="height:45%"></div>
+          <div class="b-bar" style="height:60%"></div>
+          <div class="b-bar active" style="height:80%"></div>
+          <div class="b-bar active" style="height:90%"></div>
+          <div class="b-bar active" style="height:85%"></div>
+          <div class="b-bar active" style="height:95%"></div>
+        </div>
+      </div>
+
+      <!-- Security -->
+      <div class="b-card reveal delay-1" onmousemove="cardGlow(event,this)">
+        <div class="b-icon b-icon-orange">🔒</div>
+        <h3>Post-Quantum Security</h3>
+        <p>AES-256 encryption with CRYSTALS-Kyber key exchange — future-proof against quantum attacks. HIPAA & SOC 2 Type II compliant.</p>
+      </div>
+
+      <!-- Latency -->
+      <div class="b-card reveal delay-2" onmousemove="cardGlow(event,this)">
+        <div class="b-icon b-icon-cyan">🌍</div>
+        <h3>Zero Latency Network</h3>
+        <div class="b-stat" style="color:var(--cyan); font-size:42px">&lt;12ms</div>
+        <div class="b-stat-label">global P99 quantum task latency</div>
+      </div>
+
+      <!-- Integrations card -->
+      <div class="b-card reveal delay-3" onmousemove="cardGlow(event,this)">
+        <div class="b-icon b-icon-pink">🔗</div>
+        <h3>Universal Integrations</h3>
+        <p>Native connectors for AWS Braket, IBM Quantum, Azure Quantum, and IonQ. Works with your existing CI/CD and infrastructure-as-code.</p>
+      </div>
+
+      <!-- Uptime -->
+      <div class="b-card reveal delay-4" onmousemove="cardGlow(event,this)">
+        <div class="b-icon b-icon-green">🛡️</div>
+        <h3>Enterprise Reliability</h3>
+        <div class="b-stat" style="color:var(--green); font-size:42px">99.99%</div>
+        <div class="b-stat-label">SLA uptime with automatic classical fallback</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ INDUSTRIES ════════════════ -->
+<section id="industries" class="section industries-section">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <span class="eyebrow">Industries</span>
+      <h2>Built for every compute-heavy domain</h2>
+      <p>Q-Stream's quantum routing is optimized for the world's most demanding workloads.</p>
+    </div>
+    <div class="industries-grid">
+      <div class="industry-card reveal delay-1" style="--ind-color:#818cf8;--ind-bg:rgba(129,140,248,0.08);--ind-border:rgba(129,140,248,0.2)">
+        <div class="ind-tag">AI & ML</div>
+        <div class="ind-icon">🤖</div>
+        <h3>Artificial Intelligence</h3>
+        <p>Quantum-accelerate training loops, hyperparameter search, and inference optimization for large language models and computer vision pipelines.</p>
+        <div class="ind-stat">Cost reduction: <strong style="color:#818cf8">↓ 74%</strong></div>
+      </div>
+      <div class="industry-card reveal delay-2" style="--ind-color:#22d3ee;--ind-bg:rgba(34,211,238,0.08);--ind-border:rgba(34,211,238,0.2)">
+        <div class="ind-tag">FinTech</div>
+        <div class="ind-icon">📈</div>
+        <h3>Financial Services</h3>
+        <p>Portfolio optimization, risk modeling, and Monte Carlo simulations at quantum speed. Solve in seconds what takes classical systems hours.</p>
+        <div class="ind-stat">Speed improvement: <strong style="color:#22d3ee">↑ 320x</strong></div>
+      </div>
+      <div class="industry-card reveal delay-3" style="--ind-color:#4ade80;--ind-bg:rgba(74,222,128,0.08);--ind-border:rgba(74,222,128,0.2)">
+        <div class="ind-tag">Logistics</div>
+        <div class="ind-icon">🚚</div>
+        <h3>Supply Chain & Logistics</h3>
+        <p>Tackle the traveling salesman problem and vehicle routing at scale. Quantum routing finds optimal paths classical algorithms never could.</p>
+        <div class="ind-stat">Route efficiency: <strong style="color:#4ade80">↑ 43%</strong></div>
+      </div>
+      <div class="industry-card reveal delay-1" style="--ind-color:#fb923c;--ind-bg:rgba(251,146,60,0.08);--ind-border:rgba(251,146,60,0.2)">
+        <div class="ind-tag">Drug Discovery</div>
+        <div class="ind-icon">🧬</div>
+        <h3>Life Sciences</h3>
+        <p>Molecular simulation, protein folding, and genomic analysis at quantum scale. Compress years of research into weeks with quantum chemistry models.</p>
+        <div class="ind-stat">Simulation speedup: <strong style="color:#fb923c">↑ 1,000x</strong></div>
+      </div>
+      <div class="industry-card reveal delay-2" style="--ind-color:#f472b6;--ind-bg:rgba(244,114,182,0.08);--ind-border:rgba(244,114,182,0.2)">
+        <div class="ind-tag">Cryptography</div>
+        <div class="ind-icon">🔐</div>
+        <h3>Security & Cryptography</h3>
+        <p>Post-quantum key generation, lattice-based cryptography implementation, and quantum-safe certificate infrastructure for enterprises.</p>
+        <div class="ind-stat">Key generation: <strong style="color:#f472b6">↑ 890x</strong></div>
+      </div>
+      <div class="industry-card reveal delay-3" style="--ind-color:#a78bfa;--ind-bg:rgba(167,139,250,0.08);--ind-border:rgba(167,139,250,0.2)">
+        <div class="ind-tag">Energy</div>
+        <div class="ind-icon">⚡</div>
+        <h3>Energy & Utilities</h3>
+        <p>Smart grid optimization, renewable energy dispatch, and carbon footprint minimization using quantum annealing for complex constraint solving.</p>
+        <div class="ind-stat">Energy savings: <strong style="color:#a78bfa">↓ 28%</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ COMPARISON ════════════════ -->
+<section class="section compare-section">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <span class="eyebrow">The Convincer</span>
+      <h2>Traditional Cloud vs. <em style="font-style:normal;color:var(--accent-3)">Q-Stream</em></h2>
+    </div>
+    <div class="compare-wrap reveal delay-1">
+      <div class="compare-row compare-head">
+        <div class="compare-cell">Capability</div>
+        <div class="compare-cell">Traditional Cloud (AWS/GCP)</div>
+        <div class="compare-cell">Q-Stream Quantum Hybrid</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell"><strong>Optimization Cost</strong></div>
+        <div class="compare-cell"><span class="cx">✕</span> High linear scaling</div>
+        <div class="compare-cell"><span class="ck">✓</span> Quantum efficiency</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell"><strong>NP-Hard Problem Solving</strong></div>
+        <div class="compare-cell"><span class="cx">✕</span> Exponential time</div>
+        <div class="compare-cell"><span class="ck">✓</span> Polynomial quantum time</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell"><strong>Processing Speed</strong></div>
+        <div class="compare-cell"><span class="cx">✕</span> GPU bottlenecked</div>
+        <div class="compare-cell"><span class="ck">✓</span> Quantum parallelism</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell"><strong>Energy Footprint</strong></div>
+        <div class="compare-cell"><span class="cx">✕</span> Massive data centers</div>
+        <div class="compare-cell"><span class="ck">✓</span> Minimal quantum states</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell"><strong>Future Cryptography</strong></div>
+        <div class="compare-cell"><span class="cx">✕</span> Vulnerable to Q-attacks</div>
+        <div class="compare-cell"><span class="ck">✓</span> Post-quantum secure</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell"><strong>Auto Scaling</strong></div>
+        <div class="compare-cell"><span class="cx">✕</span> Linear, costly</div>
+        <div class="compare-cell"><span class="ck">✓</span> Quantum superposition</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ TESTIMONIALS ════════════════ -->
+<section class="section testimonials-section">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <span class="eyebrow">Testimonials</span>
+      <h2>Trusted by quantum-forward teams</h2>
+      <p>Join 2,400+ engineers already saving millions with Q-Stream.</p>
+    </div>
+    <div class="t-grid">
+      <div class="t-card reveal delay-1">
+        <div class="t-stars">
+          <span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span>
+        </div>
+        <div class="t-badge">verified customer</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">We cut our ML training infrastructure costs by 76% in the first month. Q-Stream's quantum routing just… works. It found optimizations our entire DevOps team had missed for two years.</p>
+        <div class="t-author">
+          <div class="t-avatar" style="background:rgba(99,102,241,0.2);color:var(--accent-3)">AK</div>
+          <div>
+            <div class="t-name">Ananya Krishnan</div>
+            <div class="t-role">Head of MLOps, Luminary AI</div>
+          </div>
+        </div>
+      </div>
+      <div class="t-card reveal delay-2">
+        <div class="t-stars">
+          <span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span>
+        </div>
+        <div class="t-badge">verified customer</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">Running Monte Carlo simulations for our trading desk used to take 14 hours. With Q-Stream quantum offloading, it's down to 18 minutes. That's not an improvement — it's a different world.</p>
+        <div class="t-author">
+          <div class="t-avatar" style="background:rgba(34,211,238,0.15);color:var(--cyan)">MR</div>
+          <div>
+            <div class="t-name">Marcus Reeves</div>
+            <div class="t-role">CTO, Vortex Capital</div>
+          </div>
+        </div>
+      </div>
+      <div class="t-card reveal delay-3">
+        <div class="t-stars">
+          <span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span>
+        </div>
+        <div class="t-badge">verified customer</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">The 10-minute setup claim felt like marketing. It was actually 8 minutes. Our AWS bill dropped from $34K to $7K in the second month. Q-Stream is the best ROI decision we've made this year.</p>
+        <div class="t-author">
+          <div class="t-avatar" style="background:rgba(74,222,128,0.15);color:var(--green)">SP</div>
+          <div>
+            <div class="t-name">Sofia Papadopoulos</div>
+            <div class="t-role">VP Engineering, DroneGrid Logistics</div>
+          </div>
+        </div>
+      </div>
+      <div class="t-card reveal delay-1">
+        <div class="t-stars">
+          <span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span>
+        </div>
+        <div class="t-badge">verified customer</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">We were skeptical — "quantum" sounds like buzzword bingo. But the cost analytics dashboard proved it within week one. Real savings, real speed. Our CFO now calls it a line item they'd never cut.</p>
+        <div class="t-author">
+          <div class="t-avatar" style="background:rgba(251,146,60,0.15);color:var(--orange)">JL</div>
+          <div>
+            <div class="t-name">James Liu</div>
+            <div class="t-role">Platform Architect, BioNexus Labs</div>
+          </div>
+        </div>
+      </div>
+      <div class="t-card reveal delay-2">
+        <div class="t-stars">
+          <span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span>
+        </div>
+        <div class="t-badge">verified customer</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">Post-quantum cryptography was a 6-month roadmap item. Q-Stream made it a two-day integration. Their security team is genuinely world-class and the compliance docs were ready before we asked.</p>
+        <div class="t-author">
+          <div class="t-avatar" style="background:rgba(244,114,182,0.15);color:var(--pink)">NC</div>
+          <div>
+            <div class="t-name">Niamh Chen</div>
+            <div class="t-role">CISO, SecureLayer Financial</div>
+          </div>
+        </div>
+      </div>
+      <div class="t-card reveal delay-3">
+        <div class="t-stars">
+          <span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span>
+        </div>
+        <div class="t-badge">verified customer</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">Grid optimization used to require overnight batch jobs. Now it runs continuously in real-time. The energy dispatch improvements alone paid for our enterprise plan 12× over in the first quarter.</p>
+        <div class="t-author">
+          <div class="t-avatar" style="background:rgba(167,139,250,0.15);color:#a78bfa">RV</div>
+          <div>
+            <div class="t-name">Rajesh Varma</div>
+            <div class="t-role">Chief Data Officer, NovaStar Energy</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ PRICING ════════════════ -->
+<section id="pricing" class="section pricing-section">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <span class="eyebrow">Pricing</span>
+      <h2>Simple, transparent plans</h2>
+      <p>Start optimizing today. Upgrade as you grow.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="p-card reveal delay-1">
+        <div class="p-tier">Starter</div>
+        <div class="p-price"><sub>$</sub>59</div>
+        <div class="p-period">per month, billed monthly</div>
+        <div class="p-desc">Perfect for solo developers and side projects exploring quantum optimization.</div>
+        <div class="p-feature"><span class="p-check">✓</span> 1,000 quantum tasks / month</div>
+        <div class="p-feature"><span class="p-check">✓</span> Core API access</div>
+        <div class="p-feature"><span class="p-check">✓</span> Cost analytics dashboard</div>
+        <div class="p-feature"><span class="p-check">✓</span> AWS & Azure connectors</div>
+        <div class="p-feature"><span class="p-check">✓</span> Community support</div>
+        <button class="btn btn-ghost p-btn" onclick="alert('Get Started')">Get Started</button>
+      </div>
+
+      <div class="p-card popular reveal delay-2">
+        <div class="p-tier pop-label">⭐ Most Popular</div>
+        <div class="p-price"><sub>$</sub>149</div>
+        <div class="p-period">per month, billed monthly</div>
+        <div class="p-desc">For growing startups and engineering teams ready to scale quantum efficiency.</div>
+        <div class="p-feature"><span class="p-check">✓</span> 10,000 quantum tasks / month</div>
+        <div class="p-feature"><span class="p-check">✓</span> Priority quantum routing</div>
+        <div class="p-feature"><span class="p-check">✓</span> Advanced cost analytics</div>
+        <div class="p-feature"><span class="p-check">✓</span> All cloud connectors</div>
+        <div class="p-feature"><span class="p-check">✓</span> 24/7 priority support</div>
+        <div class="p-feature"><span class="p-check">✓</span> Team access (up to 10 seats)</div>
+        <button class="btn btn-primary p-btn" onclick="alert('Start Free Trial')">Start Free Trial →</button>
+      </div>
+
+      <div class="p-card reveal delay-3">
+        <div class="p-tier">Enterprise</div>
+        <div class="p-price" style="font-size:40px;">Custom</div>
+        <div class="p-period">volume pricing, annual billing</div>
+        <div class="p-desc">For large-scale AI workloads, financial institutions, and mission-critical infrastructure.</div>
+        <div class="p-feature"><span class="p-check">✓</span> Unlimited quantum tasks</div>
+        <div class="p-feature"><span class="p-check">✓</span> Dedicated quantum gateway</div>
+        <div class="p-feature"><span class="p-check">✓</span> On-prem deployment option</div>
+        <div class="p-feature"><span class="p-check">✓</span> HIPAA & SOC 2 compliance</div>
+        <div class="p-feature"><span class="p-check">✓</span> Dedicated account manager</div>
+        <div class="p-feature"><span class="p-check">✓</span> Custom SLA (up to 99.99%)</div>
+        <button class="btn btn-ghost p-btn" onclick="alert('Contact Sales')">Contact Sales</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ FAQ ════════════════ -->
+<section id="faq" class="section faq-section">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <span class="eyebrow">FAQ</span>
+      <h2>Questions we get asked a lot</h2>
+    </div>
+    <div class="faq-wrap">
+      <div class="faq-item open">
+        <div class="faq-q">Do I need to own a quantum computer? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Not at all. Q-Stream provides a managed interface to our private quantum network via a simple API. You get all the benefits of quantum acceleration without owning, managing, or understanding any quantum hardware.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How is my data protected? <span class="faq-plus">+</span></div>
+        <div class="faq-a">We use CRYSTALS-Kyber post-quantum key exchange for all data in transit, AES-256 for data at rest, and our systems are HIPAA and SOC 2 Type II certified. Your computation inputs are never stored after task completion.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Which workloads benefit most from quantum offloading? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Q-Stream delivers the greatest gains for NP-hard optimization problems: portfolio optimization, route planning, molecular simulation, hyperparameter tuning, and combinatorial search. Our SDK includes a task analyzer that tells you precisely which tasks in your codebase are quantum candidates.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How long does integration actually take? <span class="faq-plus">+</span></div>
+        <div class="faq-a">The SDK installs via npm or pip in 30 seconds. Initial configuration with your cloud provider takes 5–15 minutes using our guided CLI wizard. For enterprise on-prem deployments, our team handles setup within 48 hours with a dedicated solution engineer.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What happens if the quantum network is unavailable? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Q-Stream automatically falls back to optimized classical execution with zero code changes required on your end. Our SLA guarantees continuous service availability. You'll see a flag in your dashboard when quantum routing was used vs. the classical fallback, so you always have full visibility.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Does Q-Stream support multi-cloud environments? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Yes — Q-Stream has native connectors for AWS (Braket), Azure Quantum, Google Quantum AI, IBM Quantum, and IonQ. You can route tasks to any quantum backend and mix providers based on availability and cost using our intelligent scheduling layer.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is there a free trial? What's included? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Yes — all plans include a 14-day free trial with full Professional-tier access, including 10,000 quantum tasks, priority routing, and 24/7 support. No credit card required to start. At the end of the trial you can downgrade, upgrade, or cancel with one click.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How does billing work for quantum tasks? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Each plan includes a monthly task allowance. A "quantum task" is counted as one optimization call to the quantum network, regardless of problem complexity. Unused tasks don't roll over. Overage is billed at $0.012 per task on Starter and $0.008 per task on Professional. Enterprise customers get custom volume pricing.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════ CTA ════════════════ -->
+<section class="cta-section">
+  <div class="wrap">
+    <div class="cta-card reveal">
+      <span class="eyebrow">Get Started Today</span>
+      <h2>Ready to slash your cloud bill?</h2>
+      <p>Join 2,400+ teams already saving millions with quantum optimization. No credit card required.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-lg" onclick="alert('Start Free Trial')">Start Free 14-Day Trial →</button>
+        <button class="btn btn-ghost btn-lg" onclick="alert('Talk to Sales')">Talk to Sales</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<footer class="footer">
+  <div class="wrap-wide">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="#">
+          <div class="logo-mark">Q</div>
+          <span class="logo-text">Q‑Stream</span>
+        </a>
+        <p>The quantum cloud optimizer that slashes costs and accelerates compute for the world's most demanding workloads.</p>
+        <div class="social-links">
+          <a class="social-link" href="#" title="Twitter">𝕏</a>
+          <a class="social-link" href="#" title="GitHub">⌥</a>
+          <a class="social-link" href="#" title="LinkedIn">in</a>
+          <a class="social-link" href="#" title="Discord">◈</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Product</h5>
+        <a href="#how">How it Works</a>
+        <a href="#features">Features</a>
+        <a href="#industries">Industries</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#">Changelog</a>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Press Kit</a>
+        <a href="#">Partners</a>
+      </div>
+      <div class="footer-col">
+        <h5>Legal & Docs</h5>
+        <a href="#">Documentation</a>
+        <a href="#">API Reference</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">HIPAA Compliance</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 Q‑Stream, Inc. All rights reserved.</p>
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        All systems operational
+      </div>
+      <p style="font-size:12px;color:var(--text-3);">Made with ⚡ for the quantum era</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Intersection Observer reveals
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => obs.observe(el));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.querySelector('.faq-q').addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Bento card glow effect
+  function cardGlow(e, el) {
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+    const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+    el.style.setProperty('--mx', x + '%');
+    el.style.setProperty('--my', y + '%');
+  }
+</script>
+
+<script>
+    async function calculateQuantumSavings() {
+        // 1. Input value tiskovadam (Example: Input ID 'cloudSpend' anukundam)
+        const spendInput = document.getElementById('cloudSpend');
+        const resultDisplay = document.getElementById('resultText'); // Result chupinchadaniki
+        
+        const spendValue = spendInput ? spendInput.value : 10000; // Value lekapothe default 10k
+
+        // UI Loading State (Optional: Modern feel kosam)
+        if(resultDisplay) resultDisplay.innerText = "Quantum Engine Analyzing...";
+
+        try {
+            // 2. Backend API ki request pampadam
+            const response = await fetch('http://localhost:5000/api/optimize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ spend: spendValue })
+            });
+
+            // 3. Backend nundi response tiskovadam
+            const data = await response.json();
+
+            // 4. Result ni UI lo chupinchadam
+            if (data.message) {
+                console.log("Success:", data.message);
+                if(resultDisplay) {
+                    resultDisplay.innerText = data.message;
+                    resultDisplay.style.color = "#8B5CF6"; // iSada Purple Color
+                } else {
+                    alert(data.message);
+                }
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            alert("Backend start cheyaledu emo chudu bro!");
+        }
+    }
+</script>
+
+</body>
+</html>
