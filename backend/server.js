@@ -9,8 +9,8 @@ app.use(cors());
 app.use(express.json());
 
 // 1. FRONTEND SERVING
-// Root URL lo direct ga frontend ravalante idi compulsory
-app.use(express.static(path.join(__dirname, 'public')));
+// Files anni bayate (root folder lo) unnayi kabatti '.' ni point chesthunnam
+app.use(express.static(path.join(__dirname, '.')));
 
 // --- DATABASE (Temporary In-Memory) ---
 const users = [];
@@ -23,7 +23,7 @@ app.post('/api/optimize', (req, res) => {
     console.log(`   Provider : ${provider || 'N/A'}`);
     console.log(`   Spend    : $${spend}`);
 
-    // Render lo 'python3' command use cheyali
+    // Render environment lo python3 use cheyali
     const pythonProcess = spawn('python3', ['optimizer.py', spend]);
 
     let outputBuffer = '';
@@ -97,10 +97,10 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: '🚀 OptimumQ backend is running!' });
 });
 
-// 5. CATCH-ALL ROUTE (REPLACING WILDCARD WITH REGEX)
-// Node v24 lo string '*' pani cheyyadu, so direct regex /.*/ vaadali
+// 5. CATCH-ALL ROUTE
+// Regex use chesi index.html ni root folder nundi serve chesthunnam
 app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // --- START SERVER ---
